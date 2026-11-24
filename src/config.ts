@@ -30,11 +30,11 @@ export interface Pkg {
   duration: string;
 }
 
-export const brand = "Nama Usaha";
+export const brand = "Kenzo Mobil";
 
 // Format internasional tanpa "+" dan tanpa spasi. Nomor di bawah ini kosong sengaja,
 // ganti dengan nomor WhatsApp Anda sebelum halaman dipublikasikan.
-export const waNumber = "6280000000000";
+export const waNumber = "628989123423432";
 
 export const services: Service[] = [
   { id: "harian", label: "Harian dalam kota", rate: "per hari (12 jam)", hasDays: true },
