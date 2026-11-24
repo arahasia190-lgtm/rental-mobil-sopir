@@ -52,6 +52,7 @@ interface Pick {
 const LIMITS = { days: { min: 1, max: 14 }, pax: { min: 1, max: 40 } } as const;
 
 const trip: Trip = { service: "harian", date: "", days: 1, pax: 4, dest: "" };
+let lastTotalText = "";
 
 function svcOf(id: ServiceId): Service {
   const s = services.find((x) => x.id === id);
@@ -164,8 +165,8 @@ function renderPackages(kind: KindId, animate = false): void {
   const list = kind === "semua" ? packages : packages.filter((p) => p.kind === kind);
   q<HTMLElement>("#pkgs").innerHTML = list
     .map(
-      (p) => `
-      <article class="card pkg${animate ? " pop" : ""}">
+      (p, idx) => `
+      <article class="card pkg${animate ? " pop" : ""}"${animate ? ` style="animation-delay:${idx * 55}ms"` : ""}>
         <h3>${esc(p.title)}</h3>
         <p>${esc(p.blurb)}</p>
         <p class="pkg__meta">Durasi: ${esc(p.duration)}</p>
@@ -178,14 +179,27 @@ function renderPackages(kind: KindId, animate = false): void {
 
 /* ---------- update (tiap perubahan) ---------- */
 
+function pulseTotal(el: HTMLElement): void {
+  el.classList.remove("is-bump");
+  void el.offsetWidth;
+  el.classList.add("is-bump");
+}
+
 function updateResult(): void {
   const svc = svcOf(trip.service);
   const pick = recommend(trip.pax);
   const price = prices[trip.service][pick.unit.id];
   const days = svc.hasDays ? trip.days : 1;
+  const totalStr = rupiah(totalFor(pick));
 
   q("#resUnit").textContent = (pick.count > 1 ? pick.count + " x " : "") + pick.unit.name;
-  q("#resTotal").textContent = rupiah(totalFor(pick));
+  const totalEl = q<HTMLElement>("#resTotal");
+  totalEl.textContent = totalStr;
+
+  if (lastTotalText && lastTotalText !== totalStr) {
+    pulseTotal(totalEl);
+  }
+  lastTotalText = totalStr;
 
   const parts = [svc.hasDays ? `${days} hari x ${rupiah(price)}` : `Sekali jalan, ${rupiah(price)}`];
   if (pick.count > 1) parts.push(`${pick.count} unit untuk ${trip.pax} penumpang`);
@@ -311,7 +325,6 @@ function initRoad(): void {
     stops.forEach((s, i) => s.classList.toggle("on", p > 0.02 && p >= (i / (stops.length - 1)) * 0.98));
   };
 
-  // Garis berakhir tepat di titik langkah terakhir, bukan di bawah teksnya.
   const measure = (): void => {
     const last = stops[stops.length - 1];
     const dot = last ? last.querySelector<HTMLElement>(".stop__dot") : null;
@@ -346,6 +359,48 @@ function initRoad(): void {
   calc();
 }
 
+/* ---------- scroll reveal berurutan ---------- */
+
+function initReveal(): void {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const groups = [
+    ".services .service",
+    ".fleet .unit",
+    ".pkgs .pkg",
+    ".tablewrap",
+    ".incl > div",
+    ".faq details",
+    ".close__in > *",
+  ];
+
+  const targets: HTMLElement[] = [];
+  for (const sel of groups) {
+    qa<HTMLElement>(sel).forEach((el, idx) => {
+      el.classList.add("reveal");
+      el.style.setProperty("--stagger", `${Math.min(idx, 5) * 75}ms`);
+      targets.push(el);
+    });
+  }
+
+  if (reduce || !("IntersectionObserver" in window)) {
+    targets.forEach((el) => el.classList.add("is-visible"));
+    return;
+  }
+
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add("is-visible");
+        io.unobserve(entry.target);
+      }
+    },
+    { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+  );
+
+  for (const el of targets) io.observe(el);
+}
+
 /* ---------- start ---------- */
 
 function init(): void {
@@ -362,6 +417,7 @@ function init(): void {
   bindChips();
   initRoad();
   update();
+  initReveal();
 }
 
 init();
