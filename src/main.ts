@@ -39,9 +39,11 @@ const waUrl = (text: string): string => `https://wa.me/${waNumber}?text=${encode
 interface Trip {
   service: ServiceId;
   date: string;
+  time: string;
   days: number;
   pax: number;
   dest: string;
+  allIn: boolean;
 }
 
 interface Pick {
@@ -50,8 +52,9 @@ interface Pick {
 }
 
 const LIMITS = { days: { min: 1, max: 14 }, pax: { min: 1, max: 40 } } as const;
+const ALL_IN_SURCHARGE = 250000;
 
-const trip: Trip = { service: "harian", date: "", days: 1, pax: 4, dest: "" };
+const trip: Trip = { service: "harian", date: "", time: "08:00", days: 1, pax: 4, dest: "", allIn: false };
 let lastTotalText = "";
 
 function svcOf(id: ServiceId): Service {
@@ -72,9 +75,13 @@ function recommend(pax: number): Pick {
 
 const pickFor = (u: Unit): Pick => ({ unit: u, count: Math.max(1, Math.ceil(trip.pax / u.seats)) });
 
+function unitRateFor(unitId: Unit["id"]): number {
+  return prices[trip.service][unitId] + (trip.allIn ? ALL_IN_SURCHARGE : 0);
+}
+
 function totalFor(p: Pick): number {
   const svc = svcOf(trip.service);
-  return prices[trip.service][p.unit.id] * (svc.hasDays ? trip.days : 1) * p.count;
+  return unitRateFor(p.unit.id) * (svc.hasDays ? trip.days : 1) * p.count;
 }
 
 function dateText(): string {
@@ -89,7 +96,9 @@ function tripMessage(p: Pick): string {
   const lines = [
     `Halo ${brand}, saya mau sewa mobil dengan sopir.`,
     `Jenis: ${svc.label}`,
+    `Paket: ${trip.allIn ? "Terima Beres (All-In BBM & Tol)" : "Unit + Sopir Saja"}`,
     `Tanggal: ${dateText()}`,
+    `Jam jemput: ${trip.time || "08:00"} WIB`,
   ];
   if (svc.hasDays) lines.push(`Lama: ${trip.days} hari`);
   lines.push(
@@ -104,9 +113,17 @@ function tripMessage(p: Pick): string {
 function packageMessage(p: Pkg): string {
   return [
     `Halo ${brand}, saya tertarik paket "${p.title}".`,
+    `Paket: ${trip.allIn ? "Terima Beres (All-In)" : "Unit + Sopir Saja"}`,
     `Tanggal: ${dateText()}`,
+    `Jam jemput: ${trip.time || "08:00"} WIB`,
     `Penumpang: ${trip.pax} orang`,
   ].join("\n");
+}
+
+function vehicleSymbolFor(u: Unit): string {
+  if (u.seats >= 11) return "v-van";
+  if (u.id.includes("suv") || u.id.includes("innova") || u.id.includes("fortuner") || u.id.includes("pajero")) return "v-suv";
+  return "v-mpv";
 }
 
 /* ---------- build (sekali) ---------- */
@@ -127,9 +144,13 @@ function buildFleet(): void {
   q<HTMLElement>("#fleet").innerHTML = units
     .map((u) => {
       const seats = Array.from({ length: u.seats }, () => '<span class="seat"></span>').join("");
+      const sym = vehicleSymbolFor(u);
       return `
       <article class="card unit" data-unit="${u.id}">
-        <p class="unit__badge" hidden>Disarankan untuk Anda</p>
+        <div class="unit__top">
+          <div class="unit__art" aria-hidden="true"><svg><use href="#${sym}"/></svg></div>
+          <p class="unit__badge" hidden>Disarankan</p>
+        </div>
         <h3 class="unit__name">${esc(u.name)}</h3>
         <p class="unit__seats">Sopir dan ${u.seats} penumpang</p>
         <p class="unit__suits">${esc(u.suits)}</p>
@@ -148,7 +169,7 @@ function buildTable(): void {
       (s) => `
       <tr data-service="${s.id}">
         <th scope="row">${esc(s.label)}<small>${esc(s.rate)}</small></th>
-        ${units.map((u) => `<td>${rupiah(prices[s.id][u.id])}</td>`).join("")}
+        ${units.map((u) => `<td data-cell-unit="${u.id}">${rupiah(prices[s.id][u.id])}</td>`).join("")}
       </tr>`,
     )
     .join("");
@@ -188,7 +209,7 @@ function pulseTotal(el: HTMLElement): void {
 function updateResult(): void {
   const svc = svcOf(trip.service);
   const pick = recommend(trip.pax);
-  const price = prices[trip.service][pick.unit.id];
+  const rate = unitRateFor(pick.unit.id);
   const days = svc.hasDays ? trip.days : 1;
   const totalStr = rupiah(totalFor(pick));
 
@@ -201,9 +222,10 @@ function updateResult(): void {
   }
   lastTotalText = totalStr;
 
-  const parts = [svc.hasDays ? `${days} hari x ${rupiah(price)}` : `Sekali jalan, ${rupiah(price)}`];
-  if (pick.count > 1) parts.push(`${pick.count} unit untuk ${trip.pax} penumpang`);
-  q("#resDetail").textContent = parts.join(", ");
+  const parts = [svc.hasDays ? `${days} hari x ${rupiah(rate)}` : `Sekali jalan, ${rupiah(rate)}`];
+  if (trip.allIn) parts.push("All-In BBM & tol");
+  if (pick.count > 1) parts.push(`${pick.count} unit`);
+  q("#resDetail").textContent = parts.join(" • ");
 }
 
 function updateFleet(): void {
@@ -215,8 +237,8 @@ function updateFleet(): void {
     const isPick = unit.id === pick.unit.id;
     card.classList.toggle("is-pick", isPick);
     q<HTMLElement>(".unit__badge", card).hidden = !isPick;
-    q("[data-price]", card).textContent = rupiah(prices[trip.service][unit.id]);
-    q("[data-rate]", card).textContent = svc.rate;
+    q("[data-price]", card).textContent = rupiah(unitRateFor(unit.id));
+    q("[data-rate]", card).textContent = svc.rate + (trip.allIn ? " (All-In)" : "");
     const filled = Math.min(trip.pax, unit.seats);
     qa<HTMLElement>(".seat:not(.seat--driver)", card).forEach((s, i) => s.classList.toggle("on", i < filled));
     q<HTMLAnchorElement>("[data-unit-wa]", card).href = waUrl(tripMessage(pickFor(unit)));
@@ -225,7 +247,13 @@ function updateFleet(): void {
 
 function updateTable(): void {
   for (const row of qa<HTMLElement>("#tarifTable tr[data-service]")) {
-    row.classList.toggle("is-current", row.dataset.service === trip.service);
+    const svcId = row.dataset.service as ServiceId;
+    row.classList.toggle("is-current", svcId === trip.service);
+    for (const td of qa<HTMLElement>("td[data-cell-unit]", row)) {
+      const unitId = td.dataset.cellUnit as Unit["id"];
+      const val = prices[svcId][unitId] + (trip.allIn ? ALL_IN_SURCHARGE : 0);
+      td.textContent = rupiah(val);
+    }
   }
 }
 
@@ -265,7 +293,9 @@ function update(): void {
 function bindEstimator(): void {
   const form = q<HTMLFormElement>("#estimasi");
   const date = q<HTMLInputElement>("#date");
+  const time = q<HTMLInputElement>("#time");
   const dest = q<HTMLInputElement>("#dest");
+  const allIn = q<HTMLInputElement>("#allIn");
 
   const now = new Date();
   date.min = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -278,11 +308,20 @@ function bindEstimator(): void {
       trip.service = t.value as ServiceId;
       if (!svcOf(trip.service).hasDays) trip.days = 1;
       update();
+    } else if (t === allIn) {
+      trip.allIn = allIn.checked;
+      update();
     }
   });
 
   date.addEventListener("input", () => {
     trip.date = date.value;
+    updateLinks();
+    updateFleet();
+  });
+
+  time.addEventListener("input", () => {
+    trip.time = time.value;
     updateLinks();
     updateFleet();
   });

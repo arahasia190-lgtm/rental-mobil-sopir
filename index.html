@@ -25,6 +25,32 @@
   <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.8"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7"/></symbol>
   <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.7-5A8.5 8.5 0 1 1 21 11.5z"/></symbol>
+
+  <!-- Siluet Armada -->
+  <symbol id="v-mpv" viewBox="0 0 180 64">
+    <path d="M16 44h148M22 44l4-15c1.5-5 5-9 11-10l35-4h48c7 0 12 4 15 10l12 10c5 1 9 4 9 9v3H22z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M44 27h28v-9l-22 2.5c-3 .5-5 3-6 6.5zm36 0h34v-9H80v9zm42 0h18l-8-7c-2-1.5-4.5-2-7-2h-3v9z" fill="currentColor" opacity=".16"/>
+    <circle cx="46" cy="46" r="10" fill="var(--surface)" stroke="currentColor" stroke-width="2.8"/>
+    <circle cx="46" cy="46" r="4" fill="currentColor"/>
+    <circle cx="134" cy="46" r="10" fill="var(--surface)" stroke="currentColor" stroke-width="2.8"/>
+    <circle cx="134" cy="46" r="4" fill="currentColor"/>
+  </symbol>
+  <symbol id="v-suv" viewBox="0 0 180 64">
+    <path d="M14 43h152M20 43l3-17c1-5 5-9 11-9h78c6 0 11 3 14 8l10 9c7 1 14 4 14 9v4H20z" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linejoin="round"/>
+    <path d="M36 26h28v-7H42c-3 0-5 2-6 7zm35 0h32v-7H71v7zm39 0h21l-8-6c-2-1-4-1-6-1h-7v7z" fill="currentColor" opacity=".16"/>
+    <circle cx="46" cy="46" r="11" fill="var(--surface)" stroke="currentColor" stroke-width="3"/>
+    <circle cx="46" cy="46" r="4.5" fill="currentColor"/>
+    <circle cx="134" cy="46" r="11" fill="var(--surface)" stroke="currentColor" stroke-width="3"/>
+    <circle cx="134" cy="46" r="4.5" fill="currentColor"/>
+  </symbol>
+  <symbol id="v-van" viewBox="0 0 180 64">
+    <path d="M14 44h152M18 44V20c0-5 4-8 9-8h104c6 0 11 3 14 8l11 14c3 3 4 6 4 10v3H18z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M28 27h24V16H31c-2 0-3 1-3 3v8zm30 0h26V16H58v11zm32 0h26V16H90v11zm32 0h22l-7-9c-1.5-1.5-3-2-5-2h-10v11z" fill="currentColor" opacity=".16"/>
+    <circle cx="44" cy="46" r="10.5" fill="var(--surface)" stroke="currentColor" stroke-width="2.8"/>
+    <circle cx="44" cy="46" r="4" fill="currentColor"/>
+    <circle cx="136" cy="46" r="10.5" fill="var(--surface)" stroke="currentColor" stroke-width="2.8"/>
+    <circle cx="136" cy="46" r="4" fill="currentColor"/>
+  </symbol>
 </svg>
 
 <a class="skip" href="#main">Lewati ke konten</a>
@@ -73,9 +99,15 @@
         <div class="seg" id="seg"></div>
       </fieldset>
 
-      <div class="field">
-        <label for="date">Tanggal berangkat</label>
-        <input type="date" id="date" name="date">
+      <div class="field-row">
+        <div class="field">
+          <label for="date">Tanggal berangkat</label>
+          <input type="date" id="date" name="date">
+        </div>
+        <div class="field">
+          <label for="time">Jam jemput</label>
+          <input type="time" id="time" name="time" value="08:00">
+        </div>
       </div>
 
       <div class="field-row">
@@ -99,8 +131,31 @@
 
       <div class="field">
         <label for="dest">Tujuan</label>
-        <input type="text" id="dest" name="dest" placeholder="Kota atau tempat tujuan" autocomplete="off">
+        <input type="text" id="dest" name="dest" list="dest-list" placeholder="Ketik kota, bandara, atau lokasi wisata" autocomplete="off">
+        <datalist id="dest-list">
+          <option value="Dalam Kota (Full Day)">
+          <option value="Bandara Soekarno-Hatta (CGK)">
+          <option value="Bandara Halim Perdanakusuma (HLP)">
+          <option value="Bandara Kertajati (KJT)">
+          <option value="Kota Jakarta">
+          <option value="Kabupaten Jakarta / Kepulauan Seribu">
+          <option value="Kota Bandung">
+          <option value="Lembang & Ciwidey">
+          <option value="Puncak & Bogor">
+          <option value="Tasikmalaya & Pangandaran">
+          <option value="Garut & Cipanas">
+          <option value="Yogyakarta">
+        </datalist>
       </div>
+
+      <label class="toggle" for="allIn">
+        <input type="checkbox" id="allIn" name="allIn">
+        <span class="toggle__box" aria-hidden="true"></span>
+        <span class="toggle__text">
+          <strong>Paket Terima Beres (All-In)</strong>
+          <small>Sertakan estimasi BBM, tol &amp; makan sopir</small>
+        </span>
+      </label>
 
       <div class="result" aria-live="polite">
         <p class="result__label">Unit yang disarankan</p>
@@ -206,11 +261,11 @@
     <div class="incl">
       <div>
         <h3>Sudah termasuk</h3>
-        <p>Mobil dan sopir selama waktu sewa.</p>
+        <p>Mobil dan sopir selama waktu sewa (atau termasuk BBM &amp; tol jika memilih opsi Terima Beres).</p>
       </div>
       <div>
         <h3>Belum termasuk</h3>
-        <p>BBM, tol, parkir, dan penginapan sopir untuk perjalanan menginap, kecuali disebutkan lain.</p>
+        <p>BBM, tol, parkir, dan penginapan sopir untuk perjalanan menginap pada paket Unit + Sopir.</p>
       </div>
     </div>
   </div>
@@ -235,7 +290,7 @@
       </details>
       <details name="faq">
         <summary>Apakah harga sudah termasuk BBM dan tol?</summary>
-        <p>Belum, kecuali disebutkan lain. Rinciannya kami kirim sebelum Anda konfirmasi.</p>
+        <p>Anda bisa memilih opsi Unit + Sopir saja atau mencentang Paket Terima Beres (All-In) di kalkulator untuk estimasi termasuk BBM, tol, dan makan sopir.</p>
       </details>
       <details name="faq">
         <summary>Bagaimana jika jadwal berubah?</summary>
@@ -252,10 +307,19 @@
 <!-- 8. PENUTUP -->
 <section class="close" id="kontak">
   <div class="wrap close__in">
-    <h2 class="close__title">Sudah punya tanggal perjalanan?</h2>
-    <div class="close__action">
-      <a class="btn btn--lg" data-wa-general href="https://wa.me/6280000000000"><svg class="ico" aria-hidden="true"><use href="#i-chat"/></svg>Chat WhatsApp</a>
-      <p>WhatsApp: <span data-wa-number>+6280000000000</span></p>
+    <div class="close__copy">
+      <h2 class="close__title">Sudah punya tanggal perjalanan?</h2>
+      <p class="close__lead">Konsultasikan rute, ketersediaan armada, atau permintaan khusus langsung dengan admin kami tanpa biaya pemesanan di awal.</p>
+      <ul class="close__perks">
+        <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Respon cepat lewat WhatsApp</li>
+        <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Armada bersih &amp; terawat</li>
+        <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Sopir ramah &amp; hafal rute</li>
+      </ul>
+    </div>
+    <div class="card close__card">
+      <span class="close__status">Layanan pemesanan 24 jam</span>
+      <a class="btn btn--lg btn--block" data-wa-general href="https://wa.me/6280000000000"><svg class="ico" aria-hidden="true"><use href="#i-chat"/></svg>Chat WhatsApp Sekarang</a>
+      <p class="close__num">Nomor Admin: <strong data-wa-number>+6280000000000</strong></p>
     </div>
   </div>
 </section>
@@ -264,9 +328,11 @@
 
 <footer class="foot">
   <div class="wrap foot__in">
-    <strong data-brand>Nama Usaha</strong>
-    <span>Rental mobil dengan sopir dan paket wisata</span>
-    <span>&copy; <span data-year>2026</span></span>
+    <div class="foot__brand">
+      <strong data-brand>Nama Usaha</strong>
+      <span>Rental mobil dengan sopir dan paket wisata</span>
+    </div>
+    <span class="foot__copy">&copy; <span data-year>2026</span> <span data-brand>Nama Usaha</span>. Semua hak dilindungi.</span>
   </div>
 </footer>
 
